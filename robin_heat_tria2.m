@@ -53,7 +53,7 @@ ydiff=y2-y1;
 L=sqrt(xdiff^2+ydiff^2);
 L1=norm([xdiff,ydiff])
 
-keyboard
+
 
 switch node_not_on_boundary
     case 1

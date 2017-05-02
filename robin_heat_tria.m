@@ -39,42 +39,39 @@ if xdiff>0
     
     %keyboard
     
-    NT_int=[ x2;
+    NT_int=([ x2;
              x2^2/2;
              k*x2^2/2+m*x2]-...
            [ x1;
              x1^2/2;
-             k*x1^2/2+m*x1];
+             k*x1^2/2+m*x1])*sqrt(1+k^2);
                 
-    N_kvadrat_int=[x2               x2^2/2              k*x2^2/2+m*x2;
+    N_kvadrat_int=([x2               x2^2/2              k*x2^2/2+m*x2;
                    x2^2/2           x2^3/3              k*x2^3/3+m*x2^2/2;
                    k*x2^2/2+m*x2    k*x2^3/3+m*x2^2/2   k^2*x2^3/3+m*k*x2^2+m^2*x2]-...
                   [x1               x1^2/2              k*x1^2/2+m*x1;
                    x1^2/2           x1^3/3              k*x1^3/3+m*x1^2/2;
-                   k*x1^2/2+m*x1    k*x1^3/3+m*x1^2/2   k^2*x1^3/3+m*k*x1^2+m^2*x1];
- keyboard              
-    A=[xdiff                       (x2^2-x1^2)/2                       k*(x2^2-x1^2)/2+m*(xdiff);
-                (x2^2-x1^2)/2               (x2^3-x1^3)/3                       k*(x2^3-x1^3)/3+m*(x2^2-x1^2)/2;
-                k*(x2^2-x1^2)/2+m*(xdiff)    k*(x2^3-x1^3)/3+m*(x2^2-x1^2)/2     k^2*(x2^3-x1^3)/3+m*k*(x2^2-x1^2)+m^2*xdiff];
-keyboard
+                   k*x1^2/2+m*x1    k*x1^3/3+m*x1^2/2   k^2*x1^3/3+m*k*x1^2+m^2*x1])*sqrt(1+k^2);
+             
+    
 else
     k=xdiff/ydiff;
     
     m=x1-k*y1;
     
-    NT_int=[ y2;
+    NT_int=([ y2;
              k*y2^2/2+m*y2;
              y2^2/2]-...
            [ y1;
              k*y1^2/2+m*y1;
-             y1^2/2];
+             y1^2/2])*sqrt(1+k^2);
     
-    N_kvadrat_int=[y2               k*y2^2/2+m*y2                       y2^2/2;
+    N_kvadrat_int=([y2               k*y2^2/2+m*y2                       y2^2/2;
                    k*y2^2/2+m*y2    k^2*y2^3/3+2*m*k*y2^2/2+m^2*y2      k*y2^3/3+m*y2^2/2;
                    y2^2/2           k*y2^3/3+m*y2^2/2                   y2^3/3]-...
                   [y1               k*y1^2/2+m*y1                       y1^2/2;
                    k*y1^2/2+m*y1    k^2*y1^3/3+2*m*k*y1^2/2+m^2*y1      k*y1^3/3+m*y1^2/2;
-                   y1^2/2           k*y1^3/3+m*y1^2/2                   y1^3/3];
+                   y1^2/2           k*y1^3/3+m*y1^2/2                   y1^3/3])*sqrt(1+k^2);
 end
 
 
