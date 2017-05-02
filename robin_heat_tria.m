@@ -30,28 +30,27 @@ y2=ey_temp(2);
 xdiff=x2-x1;
 ydiff=y2-y1;
 
-L=sqrt(xdiff^2+ydiff^2);
-
 if xdiff>0
+    
     k=ydiff/xdiff;
     
     m=y1-k*x1;
     
-    %keyboard
-    
-    NT_int=([ x2;
+    %Calculating the integral of N^T from x1 to x2
+    NT_int=abs(([ x2;
              x2^2/2;
              k*x2^2/2+m*x2]-...
            [ x1;
              x1^2/2;
-             k*x1^2/2+m*x1])*sqrt(1+k^2);
-                
-    N_kvadrat_int=([x2               x2^2/2              k*x2^2/2+m*x2;
+             k*x1^2/2+m*x1])*sqrt(1+k^2));
+             
+         %Calculating the integral of N^T*N from x1 to x2
+    N_kvadrat_int=abs(([x2               x2^2/2              k*x2^2/2+m*x2;
                    x2^2/2           x2^3/3              k*x2^3/3+m*x2^2/2;
                    k*x2^2/2+m*x2    k*x2^3/3+m*x2^2/2   k^2*x2^3/3+m*k*x2^2+m^2*x2]-...
                   [x1               x1^2/2              k*x1^2/2+m*x1;
                    x1^2/2           x1^3/3              k*x1^3/3+m*x1^2/2;
-                   k*x1^2/2+m*x1    k*x1^3/3+m*x1^2/2   k^2*x1^3/3+m*k*x1^2+m^2*x1])*sqrt(1+k^2);
+                   k*x1^2/2+m*x1    k*x1^3/3+m*x1^2/2   k^2*x1^3/3+m*k*x1^2+m^2*x1])*sqrt(1+k^2));
              
     
 else
@@ -59,24 +58,22 @@ else
     
     m=x1-k*y1;
     
-    NT_int=([ y2;
+    %Calculating the integral of N^T from y1 to y2
+    NT_int=abs(([ y2;
              k*y2^2/2+m*y2;
              y2^2/2]-...
            [ y1;
              k*y1^2/2+m*y1;
-             y1^2/2])*sqrt(1+k^2);
+             y1^2/2])*sqrt(1+k^2));
     
-    N_kvadrat_int=([y2               k*y2^2/2+m*y2                       y2^2/2;
+         %Calculating the integral of N^T*N from y1 to y2
+    N_kvadrat_int=abs(([y2               k*y2^2/2+m*y2                       y2^2/2;
                    k*y2^2/2+m*y2    k^2*y2^3/3+2*m*k*y2^2/2+m^2*y2      k*y2^3/3+m*y2^2/2;
                    y2^2/2           k*y2^3/3+m*y2^2/2                   y2^3/3]-...
                   [y1               k*y1^2/2+m*y1                       y1^2/2;
                    k*y1^2/2+m*y1    k^2*y1^3/3+2*m*k*y1^2/2+m^2*y1      k*y1^3/3+m*y1^2/2;
-                   y1^2/2           k*y1^3/3+m*y1^2/2                   y1^3/3])*sqrt(1+k^2);
+                   y1^2/2           k*y1^3/3+m*y1^2/2                   y1^3/3])*sqrt(1+k^2));
 end
-
-
-%C_inv'*N_kvadrat_int*C_inv*6/L
-%C_inv'*NT_int/L
 
 Ke_addition=C_inv'*N_kvadrat_int*C_inv*alpha*ep;
 %check sign on fe_addition

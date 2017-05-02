@@ -3,8 +3,8 @@ clc
 clear all
 close all
 
-ex=[0 1 0];
-ey=[0 0 1];
+ex=[3 11 0];
+ey=[2 23 1];
 
 alpha=1;
 ep=1;

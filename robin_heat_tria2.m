@@ -51,9 +51,6 @@ xdiff=x2-x1;
 ydiff=y2-y1;
 
 L=sqrt(xdiff^2+ydiff^2);
-L1=norm([xdiff,ydiff])
-
-
 
 switch node_not_on_boundary
     case 1
