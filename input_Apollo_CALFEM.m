@@ -1,4 +1,4 @@
-function [ndof, nel, ex, ey, edof]=input_Apollo_CALFEM(ndf)
+function [ndof, nel, ex, ey, edof, elem, nodedof]=input_Apollo_CALFEM(ndf)
 
 x = dlmread('Apollo.nodes'); % 1st colum containes node number
 x = x(:,2:end);              % remove 1st column
@@ -38,6 +38,16 @@ edof = zeros(nel, nen+1);
 % for CALFEM all element x- and y- coord in ex and ey matrix
 ex = zeros(nel, nen);
 ey = zeros(nel, nen);
+
+%keyboard 
+nodedof = zeros(ndof,2);
+
+for n=1:nnp
+    nodedof(n,1) = n;
+    nodedof(n,2) = [n*ndf-(ndf-1):n*ndf];
+end
+
+%keyboard
 
 for e = 1:nel
     

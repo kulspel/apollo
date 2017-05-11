@@ -1,4 +1,4 @@
-function [ex, ey, elem] = input_2tria3_CALFEM()
+function [ndof, nel, ex, ey, edof, elem, nodedof] = input_2tria3_CALFEM(ndf)
 
 % global node coordinates
 %       x      y
@@ -9,6 +9,9 @@ X = [ 0.0    0.0;
 
 % number of node points and number of spatial dimensions
 [nnp, ndm] = size(X);
+
+% total number of dofs
+ndof = nnp*ndf;
  
 % connectivity list
 connectivity = [ 1       2       3; 
@@ -16,7 +19,7 @@ connectivity = [ 1       2       3;
 
 [nel,nen] = size(connectivity);
              
-ndf = 1; % temperature is a scalar quantity
+%ndf = 1; % temperature is a scalar quantity
 
 % initialize and build up element struct elem
 % containing the element connectivity list, cn,
@@ -30,6 +33,13 @@ edof = zeros(nel, nen+1);
 % for CALFEM all element x- and y- coord in ex and ey matrix
 ex = zeros(nel, nen);
 ey = zeros(nel, nen);
+
+nodedof = zeros(ndof,2);
+
+for n=1:nnp
+    nodedof(n,1) = n;
+    nodedof(n,2) = [n*ndf-(ndf-1):n*ndf];
+end
 
 for e = 1:nel
     

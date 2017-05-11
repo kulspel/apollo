@@ -1,13 +1,16 @@
 clear all
 close all
 clc
+
 %%
 % number of degrees of freedom per node
 ndf = 1;  % temperature is a scalar!
 
 % obtain coordinates and element properties
-[ndof, nel, ex, ey, edof]=input_Apollo_CALFEM(ndf);
+[ndof, nel, ex, ey, edof, elem, nodedof]=input_Apollo_CALFEM(ndf);
+%[ndof, nel, ex, ey, edof, elem, nodedof]=input_2tria3_CALFEM(ndf);
 
+nen = size(elem(1).cn,2);
 % plot mesh, element numbers and node number
 eldraw2(ex,ey,[1,2,1])
 
@@ -27,7 +30,6 @@ rho=4540;
 c=520;
 
 
-
 %%
 %Other usefule parameters
 
@@ -41,6 +43,9 @@ alpha2 = 20;
 T1_inf=500;
 T2_inf=-50;
 
+%Tubetemp deg celsius
+Tg=100;
+
 %Thickness
 %1m
 t=1;
@@ -53,18 +58,17 @@ eq=0;
 % introduce the constitutive matrix D
 D=-k*eye(2);
 
-% initialise global tangent stiffness matrix K and global force vector
+% initialise global heat capacity matrix, tangent stiffness matrix K and global force vector
 C=zeros(ndof);
 K=zeros(ndof);
 f=zeros(ndof,1);
 
 %Boundaries
-[NodesAB,NodesBC,NodesCD,NodesDA,NodesTubes] = nodes_2tria3();
-%[NodesAB,NodesBC,NodesCD,NodesDA,NodesTubes] = BCNodes()
+%[NodesAB,NodesBC,NodesCD,NodesDA,NodesTubes] = nodes_2tria3();
+%NodesAB=[3 4]; NodesBC=[2 3]; NodesCD=[]; NodesDA=[3 4]; NodesTubes=[1 2];
+[NodesAB,NodesBC,NodesCD,NodesDA,NodesTubes] = BCNodes();
 
-upper_boundary = horzcat(NodesBC,NodesCD,NodesDA);
-
-keyboard
+%keyboard
 
 for e = 1:nel
     %C-matrix for shape functions
@@ -76,90 +80,147 @@ for e = 1:nel
     
     % call flw2te to calculate the element stiffness matrix for element e
     [Ke,fe] =flw2te(ex(e,:),ey(e,:),ep,D,eq);
+    %keyboard
+    
+    %Counters to see how many nodes are on each boundary
+    nAB = zeros(1,nen);
+    nBC = zeros(1,nen);
+    nCD = zeros(1,nen);
+    nDA = zeros(1,nen);
+%     nTubes = 0;
+    
+    
+    %Loop over the nodes in the element and see if at least 2 of them are
+    %on a boundary
+    for n=1:nen
+       
+        %Picking the node we are currently looking at 
+        node = elem(e).cn(n);
+        %keyboard
+        
+        %Check if this node is on the AB boundary
+        %The following steps are repeated for every boundary except the
+        %tubes
+        if (any(node==NodesAB)==1)
+            
+            %If it is on the boundary increase the counter, since we only
+            %care if 2 nodes are on the boundary
+            nAB(1)=nAB(1)+1;
+            
+            %THis is to be able to pick out which of the 2 nodes are on the
+            %boundary since the calculations look slightly different
+            %depending on which node is not on the boundary
+            if(nAB(2)==0)
+                nAB(2)=node;
+            else
+                nAB(3)=node;
+            end            
+        end
+
+        
+        if (any(node==NodesBC)==1)
+            nBC(1)=nBC(1)+1;
+            if(nBC(2)==0)
+                nBC(2)=node;
+            else
+                nBC(3)=node;
+            end 
+        end
+        
+        if (any(node==NodesCD)==1)
+            nCD(1)=nCD(1)+1;
+            if(nCD(2)==0)
+                nCD(2)=node;
+            else
+                nCD(3)=node;
+            end 
+        end
+        
+        if (any(node==NodesDA)==1)
+            nDA(1)=nDA(1)+1;
+            if(nDA(2)==0)
+                nDA(2)=node;
+            else
+                nDA(3)=node;
+            end 
+        end
+        %keyboard
+
+    end
+    %end for the boundary loop
+   
+    %keyboard
+    Ke_additionAB=0;
+    Ke_additionBC=0;
+    Ke_additionCD=0;
+    Ke_additionDA=0;
+    fe_additionAB=0;
+    fe_additionBC=0;
+    fe_additionCD=0;
+    fe_additionDA=0;
+    
+    %Now that we know how many nodes are on each boundary we can send them
+    %into the boundary conditions calculator
+    if(nAB(1)==2)
+        %keyboard
+        [Ke_additionAB,fe_additionAB]=robin_heat_tria2(ex(e,:),ey(e,:),ep,alpha1,T1_inf,find(elem(e).cn==setdiff(elem(e).cn,nAB(2:end))));
+        %keyboard
+    end
+    
+    if(nBC(1)==2)
+        [Ke_additionBC,fe_additionBC]=robin_heat_tria2(ex(e,:),ey(e,:),ep,alpha2,T2_inf,find(elem(e).cn==setdiff(elem(e).cn,nBC(2:end))));
+        %keyboard
+    end
+    
+    if(nCD(1)==2)
+        [Ke_additionCD,fe_additionCD]=robin_heat_tria2(ex(e,:),ey(e,:),ep,alpha2,T2_inf,find(elem(e).cn==setdiff(elem(e).cn,nCD(2:end))));
+        %keyboard
+    end
+    
+    if(nDA(1)==2)
+        [Ke_additionDA,fe_additionDA]=robin_heat_tria2(ex(e,:),ey(e,:),ep,alpha2,T2_inf,find(elem(e).cn==setdiff(elem(e).cn,nDA(2:end))));
+        %keyboard
+    end
+    
+    Ke_addition=0;
+    fe_addition=0;
+    
+    Ke_addition=Ke_additionAB+Ke_additionBC+Ke_additionCD+Ke_additionDA;
+    fe_addition=fe_additionAB+fe_additionBC+fe_additionCD+fe_additionDA;
+    
+    clear Ke_additionAB Ke_additionBC Ke_additionCD Ke_additionDA fe_additionAB fe_additionBC fe_additionCD fe_additionDA
+    %keyboard
+    
+    Ke=Ke-Ke_addition;
+    fe=fe-fe_addition;
+    %keyboard
+    
     % call assem to assamble the element stiffness matrix to the global one
-    [K,f]=assem(edof,K,Ke,f,fe);
+    [K,f]=assem(edof(e,:),K,Ke,f,fe);
+    %keyboard
 end
 
 
-% introduce the boundary vector fb
-fb=zeros(ndof,1);
+bc = [nodedof(NodesTubes(:),2),ones(size(NodesTubes,2),1)*Tg]; 
+
+
+%keyboard
+
+clear nAB nBC nCD nDA Ce Ke Ke_addition fe fe_addition k rho
+%clear NodesAB NodesBC NodesCD NodesDA NodesTubes
+
 
 %%
 % call solveq
-%[a,Q]=solve(K,fb,bc);
-keyboard
+[a,Q]=solve(K,f,bc);
+%keyboard
 
-%%
-%===== start of the main FEM program =====================================
-% separate the degrees of freedoms into
-% 1. freeDofs, the unkown node temperature we need to compute
-% 2. drltDofs, prescribed temperature values at the boundary
+% call extract 
+ed=extract(edof,a);
+%keyboard
 
-% a vector contains all dofs
-allDofs = (1:1:nnp*ndf)';
+%fill(ex',ey',ed')
+fill(ex',ey',ed')
 
-% dofs with Dirichlet boundary conditions, prescribed temperature values
-numDrltDofs = length(NodesTubes);
-drltDofs = zeros(numDrltDofs,1);
-drltValues = zeros(numDrltDofs, 1);
-
-%Dirichelet BC. Prescribed temperature in cooling pipes
-Tg = 100;
-
-for i=1:numDrltDofs
-    node = NodesTubes(i);
-    drltDofs(i) = (node-1)*ndf + 1;
-    drltValues(i) = Tg;
-end
-
-% freeDofs = allDofs "-" drltDofs
-freeDofs = setdiff(allDofs, drltDofs);
-
-% dofs with Robin boundary conditions
-numRobinDofs = length(NodesAB);
-
-lower_robinDofs = zeros(numRobinDofs,1);
-lower_robinValues = zeros(numRobinDofs, 1);
-
-%Convecion coefficient for AB boundary (W/(m2 ·K))
-alpha1=120;
-%Celsius
-T1_inf=500;
-
-for i=1:numRobinDofs
-    node = NodesAB(i);
-    lower_robinDofs(i) = (node-1)*ndf + 1;
-    lower_robinValues(i) = -alpha1*T1_inf;
-end
-
-numRobinDofs = numRobinDofs+length(upper_boundary);
-
-upper_robinDofs = zeros(numRobinDofs-length(NodesAB),1);
-upper_robinValues = zeros(numRobinDofs-length(NodesAB), 1);
-
-%Convecion coefficient for upper boundary (W/(m2 ·K))
-alpha2=20;
-%Celsius
-T2_inf=-50;
-
-for i=1:numRobinDofs-length(NodesAB)
-    node = upper_boundary(i);
-    upper_robinDofs(i) = (node-1)*ndf + 1;
-    upper_robinValues(i) = -alpha2*T2_inf;
-end
-
-robinDofs = vertcat(lower_robinDofs,upper_robinDofs);
-robinValues = vertcat(lower_robinValues,upper_robinValues);
-
-clear NodesAB NodesBC NodesCD NodesDA NodesTubes upper_boundary upper_robinDofs upper_robinValues lower_boundary lower_robinDofs lower_robinValues node
-
-
-%=========================================================================
-% fe-analysis
-%=========================================================================
-
-% unknown node temperatures
-a = zeros(ndf*nnp,1);
-
-% initialise global volume force vector
-fvol = zeros(ndf*nnp,1);
+% plot the temperatures of the elements
+colormap('jet')

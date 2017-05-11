@@ -32,7 +32,7 @@ Ke_addition=0;
 fe_addition=0;
 return
 end
-
+%keyboard
 %Remove the node thats not on the boundary to easier get the coordinates
 %for the boundary nodes
 ex_temp= ex;
