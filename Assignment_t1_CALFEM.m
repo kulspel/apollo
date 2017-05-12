@@ -29,8 +29,6 @@ rho=4540;
 %520 J/(kg·K)
 c=520;
 
-
-%%
 %Other usefule parameters
 
 %convection coefficients
@@ -40,11 +38,14 @@ alpha2 = 20;
 
 %Far field temperature
 %T1? = 500?C ,T2? = ?50?C 
-T1_inf=500;
-T2_inf=-50;
+T1_inf=500+273.16;
+T2_inf=-50+273.16;
 
 %Tubetemp deg celsius
-Tg=100;
+Tg=100+273.16;
+
+%Initial temperature T_0=-50 deg celsius
+T_0=-50+273.16;
 
 %Thickness
 %1m
@@ -54,14 +55,10 @@ ep=t;
 %Volume heat source
 eq=0;
 
+
 %%
 % introduce the constitutive matrix D
 D=-k*eye(2);
-
-% initialise global heat capacity matrix, tangent stiffness matrix K and global force vector
-C=zeros(ndof);
-K=zeros(ndof);
-f=zeros(ndof,1);
 
 %Boundaries
 %[NodesAB,NodesBC,NodesCD,NodesDA,NodesTubes] = nodes_2tria3();
@@ -70,157 +67,184 @@ f=zeros(ndof,1);
 
 %keyboard
 
-for e = 1:nel
-    %C-matrix for shape functions
-   % C=[1 xi yi;
-   %    1 xj yj;
-   %    1 xk yk];
-    % call plantml to calculate the element heat capacity matrix for element e
-    Ce=plantml(ex(e,:),ey(e,:),c*rho);
+% simulation time and time/load step
+stopTime = 10;
+dt = 1;
+
+% loop over all time/load steps
+time = 0;
+step = 0;
+while (time < stopTime)
+    time = time + dt;
+    step = step + 1;
+
+    % initialise global heat capacity matrix, tangent stiffness matrix K and global force vector
+    C=zeros(ndof);
+    K=zeros(ndof);
+    f=zeros(ndof,1);
     
-    % call flw2te to calculate the element stiffness matrix for element e
-    [Ke,fe] =flw2te(ex(e,:),ey(e,:),ep,D,eq);
-    %keyboard
+    %If it's the first step then set initial conditions
+    if(step==1)
+        a=ones(ndof,1)*T_0;
+    end
     
-    %Counters to see how many nodes are on each boundary
-    nAB = zeros(1,nen);
-    nBC = zeros(1,nen);
-    nCD = zeros(1,nen);
-    nDA = zeros(1,nen);
-%     nTubes = 0;
+    %%
+    %Element loop
+    for e = 1:nel
+        % call plantml to calculate the element heat capacity matrix for element e
+        Ce=plantml(ex(e,:),ey(e,:),c*rho);
+        
+        %element temperatures
+        ae=a(edof(e,2:end));
+        
+        % call flw2te to calculate the element stiffness matrix for element e
+        [Ke,fe] =flw2te(ex(e,:),ey(e,:),ep,D,eq);
+        %keyboard
     
+        %Counters to see how many nodes are on each boundary
+        nAB = zeros(1,nen);
+        nBC = zeros(1,nen);
+        nCD = zeros(1,nen);
+        nDA = zeros(1,nen);
+        %nTubes = 0;
     
-    %Loop over the nodes in the element and see if at least 2 of them are
-    %on a boundary
-    for n=1:nen
+        %%
+        %Loop over the nodes in the element and see if at least 2 of them are
+        %on a boundary
+        for n=1:nen
        
-        %Picking the node we are currently looking at 
-        node = elem(e).cn(n);
-        %keyboard
+            %Picking the node we are currently looking at 
+            node = elem(e).cn(n);
+            %keyboard
         
-        %Check if this node is on the AB boundary
-        %The following steps are repeated for every boundary except the
-        %tubes
-        if (any(node==NodesAB)==1)
+            %Check if this node is on the AB boundary
+            %The following steps are repeated for every boundary except the
+            %tubes
+            if (any(node==NodesAB)==1)
             
-            %If it is on the boundary increase the counter, since we only
-            %care if 2 nodes are on the boundary
-            nAB(1)=nAB(1)+1;
+                %If it is on the boundary increase the counter, since we only
+                %care if 2 nodes are on the boundary
+                nAB(1)=nAB(1)+1;
             
-            %THis is to be able to pick out which of the 2 nodes are on the
-            %boundary since the calculations look slightly different
-            %depending on which node is not on the boundary
-            if(nAB(2)==0)
-                nAB(2)=node;
-            else
-                nAB(3)=node;
-            end            
-        end
+                %THis is to be able to pick out which of the 2 nodes are on the
+                %boundary since the calculations look slightly different
+                %depending on which node is not on the boundary
+                if(nAB(2)==0)
+                    nAB(2)=node;
+                else
+                    nAB(3)=node;
+                end            
+            end
 
         
-        if (any(node==NodesBC)==1)
-            nBC(1)=nBC(1)+1;
-            if(nBC(2)==0)
-                nBC(2)=node;
-            else
-                nBC(3)=node;
-            end 
-        end
+            if (any(node==NodesBC)==1)
+                nBC(1)=nBC(1)+1;
+                if(nBC(2)==0)
+                    nBC(2)=node;
+                else
+                    nBC(3)=node;
+                end 
+            end
         
-        if (any(node==NodesCD)==1)
-            nCD(1)=nCD(1)+1;
-            if(nCD(2)==0)
-                nCD(2)=node;
-            else
-                nCD(3)=node;
-            end 
-        end
+            if (any(node==NodesCD)==1)
+                nCD(1)=nCD(1)+1;
+                if(nCD(2)==0)
+                    nCD(2)=node;
+                else
+                    nCD(3)=node;
+                end 
+            end
         
-        if (any(node==NodesDA)==1)
-            nDA(1)=nDA(1)+1;
-            if(nDA(2)==0)
-                nDA(2)=node;
-            else
-                nDA(3)=node;
-            end 
-        end
-        %keyboard
+            if (any(node==NodesDA)==1)
+                nDA(1)=nDA(1)+1;
+                if(nDA(2)==0)
+                    nDA(2)=node;
+                else
+                    nDA(3)=node;
+                end 
+            end
+            %keyboard
 
+        end
+        %end for the boundary loop
+        
+        %%
+        %keyboard
+        Ke_additionAB=0;
+        Ke_additionBC=0;
+        Ke_additionCD=0;
+        Ke_additionDA=0;
+        fe_additionAB=0;
+        fe_additionBC=0;
+        fe_additionCD=0;
+        fe_additionDA=0;
+    
+        %Now that we know how many nodes are on each boundary we can send them
+        %into the boundary conditions calculator
+        if(nAB(1)==2)
+            %keyboard
+            [Ke_additionAB,fe_additionAB]=robin_heat_tria2(ex(e,:),ey(e,:),ep,alpha1,T1_inf,find(elem(e).cn==setdiff(elem(e).cn,nAB(2:end))));
+            %keyboard
+        end
+    
+        if(nBC(1)==2)
+            [Ke_additionBC,fe_additionBC]=robin_heat_tria2(ex(e,:),ey(e,:),ep,alpha2,T2_inf,find(elem(e).cn==setdiff(elem(e).cn,nBC(2:end))));
+            %keyboard
+        end
+    
+        if(nCD(1)==2)
+            [Ke_additionCD,fe_additionCD]=robin_heat_tria2(ex(e,:),ey(e,:),ep,alpha2,T2_inf,find(elem(e).cn==setdiff(elem(e).cn,nCD(2:end))));
+            %keyboard
+        end
+    
+        if(nDA(1)==2)
+            [Ke_additionDA,fe_additionDA]=robin_heat_tria2(ex(e,:),ey(e,:),ep,alpha2,T2_inf,find(elem(e).cn==setdiff(elem(e).cn,nDA(2:end))));
+            %keyboard
+        end
+    
+        Ke_addition=0;
+        fe_addition=0;
+    
+        Ke_addition=Ke_additionAB+Ke_additionBC+Ke_additionCD+Ke_additionDA;
+        fe_addition=fe_additionAB+fe_additionBC+fe_additionCD+fe_additionDA;
+    
+        clear Ke_additionAB Ke_additionBC Ke_additionCD Ke_additionDA fe_additionAB fe_additionBC fe_additionCD fe_additionDA
+        %keyboard
+    
+        Ke=Ke-Ke_addition;
+        fe=fe-fe_addition;
+        %keyboard
+        
+        % call assem to assamble the element stiffness matrix to the global one
+        [K,f]=assem(edof(e,:),K,Ke,f,fe);
+        C=assem(edof(e,:),C,Ce);
+        %keyboard
     end
-    %end for the boundary loop
-   
+    %End of element loop
+    
+    %%
+    bc = [nodedof(NodesTubes(:),2),ones(size(NodesTubes,2),1)*Tg]; 
+
+    keyboard
+
+    clear nAB nBC nCD nDA Ce Ke Ke_addition fe fe_addition k
+    %clear NodesAB NodesBC NodesCD NodesDA NodesTubes
+    
+    % call solveq
+    [a,Q]=solve(K+C/dt,f+(C/dt)*a,bc);
+    %[a,Q]=solve(K,f,bc);
     %keyboard
-    Ke_additionAB=0;
-    Ke_additionBC=0;
-    Ke_additionCD=0;
-    Ke_additionDA=0;
-    fe_additionAB=0;
-    fe_additionBC=0;
-    fe_additionCD=0;
-    fe_additionDA=0;
-    
-    %Now that we know how many nodes are on each boundary we can send them
-    %into the boundary conditions calculator
-    if(nAB(1)==2)
-        %keyboard
-        [Ke_additionAB,fe_additionAB]=robin_heat_tria2(ex(e,:),ey(e,:),ep,alpha1,T1_inf,find(elem(e).cn==setdiff(elem(e).cn,nAB(2:end))));
-        %keyboard
-    end
-    
-    if(nBC(1)==2)
-        [Ke_additionBC,fe_additionBC]=robin_heat_tria2(ex(e,:),ey(e,:),ep,alpha2,T2_inf,find(elem(e).cn==setdiff(elem(e).cn,nBC(2:end))));
-        %keyboard
-    end
-    
-    if(nCD(1)==2)
-        [Ke_additionCD,fe_additionCD]=robin_heat_tria2(ex(e,:),ey(e,:),ep,alpha2,T2_inf,find(elem(e).cn==setdiff(elem(e).cn,nCD(2:end))));
-        %keyboard
-    end
-    
-    if(nDA(1)==2)
-        [Ke_additionDA,fe_additionDA]=robin_heat_tria2(ex(e,:),ey(e,:),ep,alpha2,T2_inf,find(elem(e).cn==setdiff(elem(e).cn,nDA(2:end))));
-        %keyboard
-    end
-    
-    Ke_addition=0;
-    fe_addition=0;
-    
-    Ke_addition=Ke_additionAB+Ke_additionBC+Ke_additionCD+Ke_additionDA;
-    fe_addition=fe_additionAB+fe_additionBC+fe_additionCD+fe_additionDA;
-    
-    clear Ke_additionAB Ke_additionBC Ke_additionCD Ke_additionDA fe_additionAB fe_additionBC fe_additionCD fe_additionDA
+
+    % call extract 
+    ed=extract(edof,a);
     %keyboard
-    
-    Ke=Ke-Ke_addition;
-    fe=fe-fe_addition;
-    %keyboard
-    
-    % call assem to assamble the element stiffness matrix to the global one
-    [K,f]=assem(edof(e,:),K,Ke,f,fe);
-    %keyboard
+
+    %fill(ex',ey',ed')
+    fill(ex',ey',ed')
+
+    % plot the temperatures of the elements
+    colormap('jet')
+    fprintf(1,'step= %2d time= %8.4e dt= %8.4e\n', step, time, dt);
+    keyboard
 end
-
-
-bc = [nodedof(NodesTubes(:),2),ones(size(NodesTubes,2),1)*Tg]; 
-
-
-%keyboard
-
-clear nAB nBC nCD nDA Ce Ke Ke_addition fe fe_addition k rho
-%clear NodesAB NodesBC NodesCD NodesDA NodesTubes
-
-
-%%
-% call solveq
-[a,Q]=solve(K,f,bc);
-%keyboard
-
-% call extract 
-ed=extract(edof,a);
-%keyboard
-
-%fill(ex',ey',ed')
-fill(ex',ey',ed')
-
-% plot the temperatures of the elements
-colormap('jet')
+%End of time loop
