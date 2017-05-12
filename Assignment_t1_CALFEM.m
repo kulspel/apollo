@@ -25,13 +25,13 @@ k=22;
 %4540 kg/m3
 rho=4540;
 
-%mass speci?c heat capacity of titanium 
+%mass specific heat capacity of titanium 
 %520 J/(kg·K)
 c=520;
 
 
 %%
-%Other usefule parameters
+%Other useful parameters
 
 %convection coefficients
 %alpha_1 = 120 W/(m2 ·K), alpha_2 = 20 W/(m2 ·K) 
@@ -71,12 +71,10 @@ f=zeros(ndof,1);
 %keyboard
 
 for e = 1:nel
-    %C-matrix for shape functions
-   % C=[1 xi yi;
-   %    1 xj yj;
-   %    1 xk yk];
+
     % call plantml to calculate the element heat capacity matrix for element e
     Ce=plantml(ex(e,:),ey(e,:),c*rho);
+    C=assem(edof(e,:),C,Ce);
     
     % call flw2te to calculate the element stiffness matrix for element e
     [Ke,fe] =flw2te(ex(e,:),ey(e,:),ep,D,eq);
@@ -107,7 +105,7 @@ for e = 1:nel
             %care if 2 nodes are on the boundary
             nAB(1)=nAB(1)+1;
             
-            %THis is to be able to pick out which of the 2 nodes are on the
+            %This is to be able to pick out which of the 2 nodes are on the
             %boundary since the calculations look slightly different
             %depending on which node is not on the boundary
             if(nAB(2)==0)
@@ -208,7 +206,13 @@ bc = [nodedof(NodesTubes(:),2),ones(size(NodesTubes,2),1)*Tg];
 
 clear nAB nBC nCD nDA Ce Ke Ke_addition fe fe_addition k rho
 %clear NodesAB NodesBC NodesCD NodesDA NodesTubes
+%d0=-50*(ones(length(edof),1));
+%dt=0.1
+%T=1
+%ntimes=[dt:0.1:T];
 
+%ip=[dt T 1 ]
+%Tsnap=step1(K,C
 
 %%
 % call solveq
