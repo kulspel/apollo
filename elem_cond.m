@@ -1,6 +1,6 @@
-function [Ke_addition, fe_addition]=robin_heat_tria2(ex, ey,ep, alpha, T_inf, node_not_on_boundary)
+function [Ke_addition, fe_addition]=elem_cond(ex, ey,ep, alpha, T_inf, node_not_on_boundary)
 % 
-% [Ke_addition,fe_addition]=robin_heat_tria2(ex,ey,ep,alpha,T_inf,node_not_on_boundary)
+% [Ke_addition,fe_addition]=elem_cond(ex,ey,ep,alpha,T_inf,node_not_on_boundary)
 %-------------------------------------------------------------
 % PURPOSE
 %  Compute the addition to the element stiffness (conductivity) matrix for a 
