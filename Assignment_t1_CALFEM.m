@@ -215,8 +215,8 @@ bc = [nodedof(NodesTubes(:),2),ones(size(NodesTubes,2),1)*Tg];
 clear NodesAB NodesBC NodesCD NodesDA NodesTubes
 
 % simulation time and time/load step
-stopTime =200;
-dt = 1;
+stopTime =5*60*60;
+dt = 60*60;
 time = 0;
 step = 0;
 
