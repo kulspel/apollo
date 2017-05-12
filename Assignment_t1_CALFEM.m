@@ -29,8 +29,6 @@ rho=4540;
 %520 J/(kg·K)
 c=520;
 
-%Other usefule parameters
-
 %%
 %Other useful parameters
 
@@ -41,14 +39,14 @@ alpha2 = 20;
 
 %Far field temperature
 %T1? = 500?C ,T2? = ?50?C 
-T1_inf=500+273.16;
-T2_inf=-50+273.16;
+T1_inf=500;
+T2_inf=-50;
 
 %Tubetemp deg celsius
-Tg=100+273.16;
+Tg=100;
 
 %Initial temperature T_0=-50 deg celsius
-T_0=-50+273.16;
+T_0=-50;
 
 %Thickness
 %1m
@@ -61,7 +59,7 @@ eq=0;
 
 %%
 % introduce the constitutive matrix D
-D=-k*eye(2);
+D=k*eye(2);
 
 %Boundaries
 %[NodesAB,NodesBC,NodesCD,NodesDA,NodesTubes] = nodes_2tria3();
@@ -71,7 +69,7 @@ D=-k*eye(2);
 %keyboard
 
 % simulation time and time/load step
-stopTime = 10;
+stopTime = 1;
 dt = 1;
 
 % loop over all time/load steps
@@ -228,7 +226,7 @@ while (time < stopTime)
     %%
     bc = [nodedof(NodesTubes(:),2),ones(size(NodesTubes,2),1)*Tg]; 
 
-    keyboard
+    %keyboard
 
     clear nAB nBC nCD nDA Ce Ke Ke_addition fe fe_addition k
     %clear NodesAB NodesBC NodesCD NodesDA NodesTubes
@@ -248,6 +246,13 @@ while (time < stopTime)
     % plot the temperatures of the elements
     colormap('jet')
     fprintf(1,'step= %2d time= %8.4e dt= %8.4e\n', step, time, dt);
-    keyboard
+    %keyboard
 end
 %End of time loop
+%d0=ones(ndof,1)*T_0;
+%T=5;
+%dt=0.1;
+%ti=[0:dt:T];
+
+%ip=[dt T 1 [length(ti),ndof,ti,edof']]
+%[Tsnap,D,V]=step1(K,C,d0,ip,f,bc)
