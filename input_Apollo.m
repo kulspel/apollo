@@ -1,4 +1,4 @@
-function [ndof, nel, ex, ey, edof, elem, nodedof]=input_Apollo_CALFEM(ndf)
+%input_Apollo_CALFEM(ndf)
 
 x = dlmread('Apollo.nodes'); % 1st colum containes node number
 x = x(:,2:end);              % remove 1st column
@@ -47,6 +47,7 @@ for n=1:nnp
     nodedof(n,2) = [n*ndf-(ndf-1):n*ndf];
 end
 
+clear n
 %keyboard
 
 for e = 1:nel
@@ -62,4 +63,5 @@ for e = 1:nel
     ey(e,:) = x(elem(e).cn, 2);
 end
 
-end
+clear conn e ndf ndm nsv
+

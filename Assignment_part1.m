@@ -6,16 +6,15 @@ clc
 % number of degrees of freedom per node
 ndf = 1;  % temperature is a scalar!
 
-% obtain coordinates and element properties
-[ndof, nel, ex, ey, edof, elem, nodedof]=input_Apollo_CALFEM(ndf);
-%[ndof, nel, ex, ey, edof, elem, nodedof]=input_2tria3_CALFEM(ndf);
+% obtain coordinates and element properties (needs ndf!)
+input_Apollo;
 
 %Boundaries
-%[NodesAB,NodesBC,NodesCD,NodesDA,NodesTubes] = nodes_2tria3();
-%NodesAB=[3 4]; NodesBC=[2 3]; NodesCD=[]; NodesDA=[3 4]; NodesTubes=[1 2];
-[NodesAB,NodesBC,NodesCD,NodesDA,NodesTubes] = BCNodes();
+BCNodes;
 
 nen = size(elem(1).cn,2);
+
+fig= figure;
 % plot mesh, element numbers and node number
 eldraw2(ex,ey,[1,2,1])
 
@@ -166,22 +165,22 @@ for e = 1:nel
     %into the boundary conditions calculator
     if(nAB(1)==2)
         %keyboard
-        [Ke_additionAB,fe_additionAB]=robin_heat_tria2(ex(e,:),ey(e,:),ep,alpha1,T1_inf,find(elem(e).cn==setdiff(elem(e).cn,nAB(2:end))));
+        [Ke_additionAB,fe_additionAB]=elem_cond(ex(e,:),ey(e,:),ep,alpha1,T1_inf,find(elem(e).cn==setdiff(elem(e).cn,nAB(2:end))));
         %keyboard
     end
     
     if(nBC(1)==2)
-        [Ke_additionBC,fe_additionBC]=robin_heat_tria2(ex(e,:),ey(e,:),ep,alpha2,T2_inf,find(elem(e).cn==setdiff(elem(e).cn,nBC(2:end))));
+        [Ke_additionBC,fe_additionBC]=elem_cond(ex(e,:),ey(e,:),ep,alpha2,T2_inf,find(elem(e).cn==setdiff(elem(e).cn,nBC(2:end))));
         %keyboard
     end
     
     if(nCD(1)==2)
-        [Ke_additionCD,fe_additionCD]=robin_heat_tria2(ex(e,:),ey(e,:),ep,alpha2,T2_inf,find(elem(e).cn==setdiff(elem(e).cn,nCD(2:end))));
+        [Ke_additionCD,fe_additionCD]=elem_cond(ex(e,:),ey(e,:),ep,alpha2,T2_inf,find(elem(e).cn==setdiff(elem(e).cn,nCD(2:end))));
         %keyboard
     end
     
     if(nDA(1)==2)
-        [Ke_additionDA,fe_additionDA]=robin_heat_tria2(ex(e,:),ey(e,:),ep,alpha2,T2_inf,find(elem(e).cn==setdiff(elem(e).cn,nDA(2:end))));
+        [Ke_additionDA,fe_additionDA]=elem_cond(ex(e,:),ey(e,:),ep,alpha2,T2_inf,find(elem(e).cn==setdiff(elem(e).cn,nDA(2:end))));
         %keyboard
     end
     
@@ -209,18 +208,22 @@ end
 clear Ce Ke Ke_addition fe fe_addition k c t ep eq
 
 %%
-
+%Set Dirichelet BC and initial conditions
 bc = [nodedof(NodesTubes(:),2),ones(size(NodesTubes,2),1)*Tg];
+a=ones(ndof,1)*T_0;
 
 clear NodesAB NodesBC NodesCD NodesDA NodesTubes
 
 % simulation time and time/load step
-stopTime =5*60*60;
-dt = 60*60;
+stopTime =60;
+
+%dt is timestep in seconds
+dt = 10;
 time = 0;
 step = 0;
 
 % % plot the temperatures of the elements of the steady state
+% 
 % [a,Q]=solve(K,f,bc);
 % ed=extract(edof,a);
 % fill(ex',ey',ed')
@@ -229,17 +232,12 @@ step = 0;
 % h.Label.String='Temperature in centigrade';
 % keyboard 
 
-K=K*dt+C;
+K=K+C/dt;
 
 % loop over all time/load steps
 while (time < stopTime)
     time = time + dt;
     step = step + 1;
-    
-    %If it's the first step then set initial conditions
-    if(step==1)
-        a=ones(ndof,1)*T_0;
-    end
          
     %keyboard
     %use [a,Q]=solve(K,f,bc); for steady state
@@ -247,7 +245,7 @@ while (time < stopTime)
     %[a,Q]=solve(K,f,bc);
    
    
-    ftot=f*dt+C*a;
+    ftot=f+(C/dt)*a;
     
     [a,Q]=solve(K,ftot,bc);
     %a_pre=a;
@@ -263,6 +261,8 @@ while (time < stopTime)
 end
 %End of time loop
 
+clear f ftot K Ktot 
+
 %%
 %Post processing
 % call extract
@@ -272,7 +272,11 @@ ed=extract(edof,a);
 %fill(ex',ey',ed')
 fill(ex',ey',ed')
 
-% plot the temperatures of the elements
+%Settings for the graphical presentation
 colormap('jet')
 h=colorbar;
 h.Label.String='Temperature in centigrade';
+caxis([-50 500]);
+
+title(strcat('Temperature distribution after ',{' '}, int2str(time), ' seconds'));
+saveas(fig,strcat('Time_',int2str(time),'_timestep',int2str(dt),'_step',int2str(step)),'png')
