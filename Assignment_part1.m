@@ -41,7 +41,7 @@ alpha1 = 120;
 alpha2 = 20;
 
 %Far field temperature
-%T1? = 500?C ,T2? = ?50?C 
+%T1? = 500?C ,T2? = ?50?C
 T1_inf=500;
 T2_inf=-50;
 
@@ -76,7 +76,7 @@ f=zeros(ndof,1);
 for e = 1:nel
     % call plantml to calculate the element heat capacity matrix for element e
     Ce=plantml(ex(e,:),ey(e,:),c*rho);
-
+    
     % call flw2te to calculate the element stiffness matrix for element e
     [Ke,fe] =flw2te(ex(e,:),ey(e,:),ep,D,eq);
     %keyboard
@@ -215,22 +215,24 @@ a=ones(ndof,1)*T_0;
 clear NodesAB NodesBC NodesCD NodesDA NodesTubes
 
 % simulation time and time/load step
-stopTime =60;
+stopTime= 8*60*60;
 
 %dt is timestep in seconds
-dt = 10;
+dt = 100;
 time = 0;
 step = 0;
 
-% % plot the temperatures of the elements of the steady state
-% 
+% plot the temperatures of the elements of the steady state
+
 % [a,Q]=solve(K,f,bc);
 % ed=extract(edof,a);
 % fill(ex',ey',ed')
 % colormap('jet')
 % h=colorbar;
 % h.Label.String='Temperature in centigrade';
-% keyboard 
+% title('Temperature distribution for the steady state solution')
+% caxis([-50 500]);
+% keyboard
 
 K=K+C/dt;
 
@@ -238,13 +240,13 @@ K=K+C/dt;
 while (time < stopTime)
     time = time + dt;
     step = step + 1;
-         
+    
     %keyboard
     %use [a,Q]=solve(K,f,bc); for steady state
     % call solveq
     %[a,Q]=solve(K,f,bc);
-   
-   
+    
+    
     ftot=f+(C/dt)*a;
     
     [a,Q]=solve(K,ftot,bc);
@@ -252,16 +254,32 @@ while (time < stopTime)
     %keyboard
     
     fprintf(1,'step= %2d time= %8.4e dt= %8.4e\n', step, time, dt);
-%     ed=extract(edof,a);
-%     %keyboard
-%     
-%     %fill(ex',ey',ed')
-%     fill(ex',ey',ed')
-%     keyboard
+    
+    %Saving of a picture every 100 seconds
+    %Activating this increases runtime alot!
+    %     if(mod(time,100)==0)
+    %         %Post processing
+    %         % call extract
+    %         ed=extract(edof,a);
+    %         %keyboard
+    %
+    %         %fill(ex',ey',ed')
+    %         fill(ex',ey',ed')
+    %
+    %         %Settings for the graphical presentation
+    %         colormap('jet')
+    %         h=colorbar;
+    %         h.Label.String='Temperature in centigrade';
+    %         caxis([-50 500]);
+    %
+    %         title(strcat('Temperature distribution after ',{' '}, int2str(time), ' seconds'));
+    %         saveas(fig,strcat('Time_',int2str(time),'_timestep',int2str(dt),'_step',int2str(step)),'png')
+    %     end
+    
 end
 %End of time loop
 
-clear f ftot K Ktot 
+clear f ftot K Ktot
 
 %%
 %Post processing
@@ -277,6 +295,7 @@ colormap('jet')
 h=colorbar;
 h.Label.String='Temperature in centigrade';
 caxis([-50 500]);
-
 title(strcat('Temperature distribution after ',{' '}, int2str(time), ' seconds'));
-saveas(fig,strcat('Time_',int2str(time),'_timestep',int2str(dt),'_step',int2str(step)),'png')
+
+%Saving of the image
+% saveas(fig,strcat('Time_',int2str(time),'_timestep',int2str(dt),'_step',int2str(step)),'png')
