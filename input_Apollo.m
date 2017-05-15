@@ -34,17 +34,17 @@ elem = repmat(struct('cn',zeros(nen,1), ...
                     ),  nel, 1 );
 
 % for CALFEM all element dofs in one matrix
-edof = zeros(nel, nen+1);
+edof = zeros(nel, nen*ndf+1);
 % for CALFEM all element x- and y- coord in ex and ey matrix
 ex = zeros(nel, nen);
 ey = zeros(nel, nen);
 
 %keyboard 
-nodedof = zeros(ndof,2);
+nodedof = zeros(nnp,ndf+1);
 
 for n=1:nnp
     nodedof(n,1) = n;
-    nodedof(n,2) = [n*ndf-(ndf-1):n*ndf];
+    nodedof(n,2:end) = [n*ndf-(ndf-1):n*ndf];
 end
 
 clear n
@@ -56,12 +56,12 @@ for e = 1:nel
     % dofs belonging to the nodes of element e
     elem(e).edof = elem(e).cn; 
     
-    % CALFEM 
-    edof(e,:) =  [e elem(e).cn];
+    % CALFEM
+    edof(e,:) =  [e nodedof(elem(e).cn(1),2:end) nodedof(elem(e).cn(2),2:end) nodedof(elem(e).cn(3),2:end)];
     % CALFEM
     ex(e,:) = x(elem(e).cn, 1);
     ey(e,:) = x(elem(e).cn, 2);
 end
 
-clear conn e ndf ndm nsv
+clear e ndf ndm nsv
 

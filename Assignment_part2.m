@@ -4,17 +4,19 @@ clc
 
 %%
 % number of degrees of freedom per node
-ndf = 2;  % temperature is a scalar!
+ndf = 2;  % 2-dimensional
 
 % obtain coordinates and element properties (needs ndf!)
 input_Apollo;
+
+keyboard
 
 %Boundaries
 BCNodes;
 
 nen = size(elem(1).cn,2);
 
-fig= figure;
+fig = figure;
 % plot mesh, element numbers and node number
 eldraw2(ex,ey,[1,2,1])
 
@@ -31,8 +33,10 @@ E=110*10^9;
 %4540 kg/m3
 rho=4540;
 
-
 %Other useful parameters
+
+%Maximum pressure pmax=0.1 MPa
+pmax = 0.1*10^6;
 
 %Gravity acceleration constant g=9.81 m/s^2
 g=9.81;
@@ -43,8 +47,18 @@ t=1;
 
 %%
 
-%Body force, gravity acting negative in the y-dir 
-eq=[0; -g*rho};
+%Polynomial approx for the force
+%y values goes from 0 to pmax to 0
+Y=[0 pmax 0];
+
+%x-values goes from the minimum possible x value to he maximum possible
+X=linspace(min([min(ex(:,1)) min(ex(:,2)) min(ex(:,3))]), max([max(ex(:,1)) max(ex(:,2)) max(ex(:,3))]),3);
+P=polyfit(X,Y,2);
+
+clear Y X
+
+%Body force, gravity acting ne;gative in the y-dir
+eq=[0; -g*rho];
 
 % Analysis type:Plane stress, ptype=2
 ptype=2;
@@ -99,50 +113,47 @@ for e = 1:nel
             else
                 nAB(3)=node;
             end
-        end   
+        end
     end
     %end for the boundary loop
     
     
     %%
     %keyboard
-    Ke_additionAB=0;
     fe_additionAB=0;
     
     %Now that we know how many nodes are on each boundary we can send them
     %into the boundary conditions calculator
     if(nAB(1)==2)
         %keyboard
-        [Ke_additionAB,fe_additionAB]=elem_cond(ex(e,:),ey(e,:),ep,alpha1,T1_inf,find(elem(e).cn==setdiff(elem(e).cn,nAB(2:end))));
+        fe_additionAB=neumann(ex(e,:),ey(e,:),t,P,find(elem(e).cn==setdiff(elem(e).cn,nAB(2:end))));
         %keyboard
     end
     
-    clear n nAB 
-    
-    Ke_addition=Ke_additionAB;
+    clear n nAB
     fe_addition=fe_additionAB;
     
-    clear Ke_additionAB fe_additionAB 
+    clear fe_additionAB
     %keyboard
     
-    Ke=Ke+Ke_addition;
     fe=fe+fe_addition;
-    %keyboard
+    keyboard
     
     % call assem to assamble the element stiffness matrix to the global one
     [K,f]=assem(edof(e,:),K,Ke,f,fe);
-    %keyboard
+    keyboard
 end
 %End of element loop
 clear Ke Ke_addition fe fe_addition nu E t ep eq
 
 %%
-%Set Dirichelet BC 
-%Needs the addition of the top left node in x-dir
-bc = [nodedof(NodesDA(:),3),zeros(size(NodesTubes,2),1)];
+%Set Dirichelet BC
+bc = vertcat([nodedof(NodesCD(:),3),zeros(size(NodesCD,2),1)],[nodedof(2,3),0]);
 
 clear NodesAB NodesBC NodesCD NodesDA NodesTubes
 
+% Call solveq
+a=solveq(K,f,bc);
 
 %%
 %Post processing
@@ -152,14 +163,31 @@ clear NodesAB NodesBC NodesCD NodesDA NodesTubes
 ed=extract(edof,a);
 %keyboard
 
+Seff_el=zeros(nel,1);
+
+%Element loop
+for e = 1:nel
+    [es,~]=plants(ex(e,:),ey(e,:),ep,D,ed);
+    Seff_el(e)=sqrt(es(1)^2+es(2)^2+3*es(3)^2);
+end
+
+Seff_nod=zeros(nnp,1);
+
+for i=1:nnp
+    [c0,c1]=find(conn(:,2:4)==i);
+    Seff_nod(i,1)=sum(Seff_el(c0))/size(c0,1);
+end
+
+keyboard
+
 %fill(ex',ey',ed')
-fill(ex',ey',ed')
+fill(ex',ey',Seff_nod')
 
 %Settings for the graphical presentation
 colormap('jet')
 h=colorbar;
-h.Label.String='Temperature in centigrade';
-caxis([-50 500]);
+h.Label.String='Von mises stress';
+%caxis([-50 500]);
 title(strcat('Temperature distribution after ',{' '}, int2str(time), ' seconds'));
 
 %Saving of the image
