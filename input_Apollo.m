@@ -63,5 +63,5 @@ for e = 1:nel
     ey(e,:) = x(elem(e).cn, 2);
 end
 
-clear e ndf ndm nsv
+clear ndf e ndf ndm nsv
 

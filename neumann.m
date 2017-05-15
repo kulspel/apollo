@@ -51,7 +51,7 @@ L=sqrt(xdiff^2+ydiff^2);
 xmid = L/2;
 xmin=min(ex_temp(1),ex_temp(2));
 
-%Esitmate the polynomial by the vvalue att he midpoint
+%Estimate the polynomial by the vvalue att he midpoint
 p=polyval(P, xmin+xmid);
 
 switch node_not_on_boundary
