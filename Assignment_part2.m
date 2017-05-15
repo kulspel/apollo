@@ -137,59 +137,17 @@ end
 clear Ke Ke_addition fe fe_addition nu E t ep eq
 
 %%
-%Set Dirichelet BC and initial conditions
-bc = [nodedof(NodesTubes(:),2),ones(size(NodesTubes,2),1)*Tg];
+%Set Dirichelet BC 
+%Needs the addition of the top left node in x-dir
+bc = [nodedof(NodesDA(:),3),zeros(size(NodesTubes,2),1)];
 
 clear NodesAB NodesBC NodesCD NodesDA NodesTubes
 
 
-% loop over all time/load steps
-while (time < stopTime)
-    time = time + dt;
-    step = step + 1;
-    
-    %keyboard
-    %use [a,Q]=solve(K,f,bc); for steady state
-    % call solveq
-    %[a,Q]=solve(K,f,bc);
-    
-    
-    ftot=f+(C/dt)*a;
-    
-    [a,Q]=solve(K,ftot,bc);
-    %a_pre=a;
-    %keyboard
-    
-    fprintf(1,'step= %2d time= %8.4e dt= %8.4e\n', step, time, dt);
-    
-    %Saving of a picture every 100 seconds
-    %Activating this increases runtime alot!
-    %     if(mod(time,100)==0)
-    %         %Post processing
-    %         % call extract
-    %         ed=extract(edof,a);
-    %         %keyboard
-    %
-    %         %fill(ex',ey',ed')
-    %         fill(ex',ey',ed')
-    %
-    %         %Settings for the graphical presentation
-    %         colormap('jet')
-    %         h=colorbar;
-    %         h.Label.String='Temperature in centigrade';
-    %         caxis([-50 500]);
-    %
-    %         title(strcat('Temperature distribution after ',{' '}, int2str(time), ' seconds'));
-    %         saveas(fig,strcat('Time_',int2str(time),'_timestep',int2str(dt),'_step',int2str(step)),'png')
-    %     end
-    
-end
-%End of time loop
-
-clear f ftot K Ktot
-
 %%
 %Post processing
+
+%Fix post processing, needs to calculate von mises stress
 % call extract
 ed=extract(edof,a);
 %keyboard
